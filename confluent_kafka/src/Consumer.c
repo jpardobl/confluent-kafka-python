@@ -915,7 +915,6 @@ static PyObject *Consumer_consume (Handle *self, PyObject *args,
         static char *kws[] = { "num_messages", "timeout", NULL };
         rd_kafka_message_t **rkmessages;
         PyObject *msglist;
-        rd_kafka_queue_t *rkqu = self->u.Consumer.rkqu;
         CallState cs;
         Py_ssize_t i, n;
 
@@ -925,6 +924,12 @@ static PyObject *Consumer_consume (Handle *self, PyObject *args,
                 return NULL;
         }
 
+        if (!self->u.Consumer.rkqu) {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "Consumer.consume called with no consumer queue."
+                                " Ensure `group.id` has been configured fo this instance.");
+                return NULL;
+        }
         if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|Id", kws,
 					 &num_messages, &tmout))
 		return NULL;
@@ -939,7 +944,7 @@ static PyObject *Consumer_consume (Handle *self, PyObject *args,
 
         rkmessages = malloc(num_messages * sizeof(rd_kafka_message_t *));
 
-        n = (Py_ssize_t)rd_kafka_consume_batch_queue(rkqu,
+        n = (Py_ssize_t)rd_kafka_consume_batch_queue(self->u.Consumer.rkqu,
                 tmout >= 0 ? (int)(tmout * 1000.0f) : -1,
                 rkmessages,
                 num_messages);

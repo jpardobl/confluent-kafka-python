@@ -313,3 +313,12 @@ def test_calling_store_offsets_after_close_throws_erro():
     with pytest.raises(RuntimeError) as ex:
         c.offsets_for_times([TopicPartition("test", 0)])
     assert 'Consumer closed' == str(ex.value)
+
+
+def test_consume_with_no_cgrp():
+    """ calling consume() while not in a cgrp should throw a RuntimeError """
+    c = Consumer({})
+
+    with pytest.raises(RuntimeError) as ex:
+        c.consume()
+    assert 'Consumer.consume called with no consumer queue.' in str(ex.value)
